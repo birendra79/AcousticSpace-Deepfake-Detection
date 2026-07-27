@@ -206,64 +206,63 @@ class InferenceEngine:
             else "heuristic-fallback (RIR/reverb/breathing rule-based scorer)",
         }
 
-def predict(self, y: np.ndarray, sr: int, features: dict) -> dict:
+    def predict(self, y: np.ndarray, sr: int, features: dict) -> dict:
 
-    print("ENGINE STEP 1")
+        print("ENGINE STEP 1")
 
-    with tempfile.NamedTemporaryFile(
-        suffix=".wav",
-        delete=False
-    ) as tmp:
+        with tempfile.NamedTemporaryFile(
+            suffix=".wav",
+            delete=False
+        ) as tmp:
 
-        temp_path = tmp.name
+            temp_path = tmp.name
 
-    print("ENGINE STEP 2:", temp_path)
+        print("ENGINE STEP 2:", temp_path)
 
-    sf.write(temp_path, y, sr)
+        sf.write(temp_path, y, sr)
 
-    print("ENGINE STEP 3")
+        print("ENGINE STEP 3")
 
-    cnn_result = predict_audio(temp_path)
+        cnn_result = predict_audio(temp_path)
 
-    print("ENGINE STEP 4:", cnn_result)
+        print("ENGINE STEP 4:", cnn_result)
 
-    prediction = (
-        "Real"
-        if cnn_result["prediction"] == "BONAFIDE"
-        else "Deepfake"
-    )
+        prediction = (
+            "Real"
+            if cnn_result["prediction"] == "BONAFIDE"
+            else "Deepfake"
+        )
 
-    print("ENGINE STEP 5")
+        print("ENGINE STEP 5")
 
-    confidence = cnn_result["confidence"]
+        confidence = cnn_result["confidence"]
 
-    print("ENGINE STEP 6")
+        print("ENGINE STEP 6")
 
-    suspicious_segments = (
-        []
-        if prediction == "Real"
-        else self._find_suspicious_segments(y, sr)
-    )
+        suspicious_segments = (
+            []
+            if prediction == "Real"
+            else self._find_suspicious_segments(y, sr)
+        )
 
-    print("ENGINE STEP 7")
+        print("ENGINE STEP 7")
 
-    breathing_score = features["breathing"]["cadence_regularity_score"]
+        breathing_score = features["breathing"]["cadence_regularity_score"]
 
-    print("ENGINE STEP 8")
+        print("ENGINE STEP 8")
 
-    return {
-        "prediction": prediction,
-        "confidence": confidence,
-        "suspicious_segments": suspicious_segments,
-        "room_acoustics_match":
-            "High" if prediction == "Real" else "Low",
+        return {
+            "prediction": prediction,
+            "confidence": confidence,
+            "suspicious_segments": suspicious_segments,
+            "room_acoustics_match":
+                "High" if prediction == "Real" else "Low",
 
-        "breathing_consistency":
-            "Consistent"
-            if breathing_score is not None and breathing_score >= 0.3
-            else "Suspicious",
-    }
-
+            "breathing_consistency":
+                "Consistent"
+                if breathing_score is not None and breathing_score >= 0.3
+                else "Suspicious",
+        }
 
     @staticmethod
     def _find_suspicious_segments(y: np.ndarray, sr: int, window_sec: float = 3.0):
