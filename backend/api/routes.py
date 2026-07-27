@@ -557,18 +557,20 @@ async def analyze_audio(
     # -- Step 3: Extract features  [FR-3.1 – FR-3.4] -----------------------
     features = extract_all_features(audio_array, sample_rate)
 
-    # -- Step 4: Run inference  [FR-4.1 – FR-4.5] --------------------------
-   engine = get_inference_engine()
+       # -- Step 4: Run inference  [FR-4.1 – FR-4.5] --------------------------
+    engine = get_inference_engine()
 
-try:
-    result = engine.predict(audio_array, sample_rate, features)
-except Exception as e:
-    import traceback
-    print("=" * 80)
-    print("ANALYSIS ERROR")
-    print(traceback.format_exc())
-    print("=" * 80)
-    raise
+    try:
+        result = engine.predict(audio_array, sample_rate, features)
+    except Exception:
+        import traceback
+
+        print("=" * 80)
+        print("ANALYSIS ERROR")
+        print(traceback.format_exc())
+        print("=" * 80)
+        raise
+
     inference_mode: str = engine.model_info().get("mode", "heuristic")
 
     # -- Step 4b: Build XAI explanation (additive — no prediction change) ---
