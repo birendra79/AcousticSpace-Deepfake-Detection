@@ -206,47 +206,63 @@ class InferenceEngine:
             else "heuristic-fallback (RIR/reverb/breathing rule-based scorer)",
         }
 
-    def predict(self, y: np.ndarray, sr: int, features: dict) -> dict:
+def predict(self, y: np.ndarray, sr: int, features: dict) -> dict:
 
-        with tempfile.NamedTemporaryFile(
-            suffix=".wav",
-            delete=False
-        ) as tmp:
+    print("ENGINE STEP 1")
 
-            temp_path = tmp.name
+    with tempfile.NamedTemporaryFile(
+        suffix=".wav",
+        delete=False
+    ) as tmp:
 
-        sf.write(temp_path, y, sr)
+        temp_path = tmp.name
 
-        cnn_result = predict_audio(temp_path)
+    print("ENGINE STEP 2:", temp_path)
 
-        prediction = (
-            "Real"
-            if cnn_result["prediction"] == "BONAFIDE"
-            else "Deepfake"
-        )
+    sf.write(temp_path, y, sr)
 
-        confidence = cnn_result["confidence"]
+    print("ENGINE STEP 3")
 
-        suspicious_segments = (
-            []
-            if prediction == "Real"
-            else self._find_suspicious_segments(y, sr)
-        )
+    cnn_result = predict_audio(temp_path)
 
-        breathing_score = features["breathing"]["cadence_regularity_score"]
+    print("ENGINE STEP 4:", cnn_result)
 
-        return {
-            "prediction": prediction,
-            "confidence": confidence,
-            "suspicious_segments": suspicious_segments,
-            "room_acoustics_match":
-                "High" if prediction == "Real" else "Low",
+    prediction = (
+        "Real"
+        if cnn_result["prediction"] == "BONAFIDE"
+        else "Deepfake"
+    )
 
-            "breathing_consistency":
-                "Consistent"
-                if breathing_score is not None and breathing_score >= 0.3
-                else "Suspicious",
-        }
+    print("ENGINE STEP 5")
+
+    confidence = cnn_result["confidence"]
+
+    print("ENGINE STEP 6")
+
+    suspicious_segments = (
+        []
+        if prediction == "Real"
+        else self._find_suspicious_segments(y, sr)
+    )
+
+    print("ENGINE STEP 7")
+
+    breathing_score = features["breathing"]["cadence_regularity_score"]
+
+    print("ENGINE STEP 8")
+
+    return {
+        "prediction": prediction,
+        "confidence": confidence,
+        "suspicious_segments": suspicious_segments,
+        "room_acoustics_match":
+            "High" if prediction == "Real" else "Low",
+
+        "breathing_consistency":
+            "Consistent"
+            if breathing_score is not None and breathing_score >= 0.3
+            else "Suspicious",
+    }
 
 
     @staticmethod
