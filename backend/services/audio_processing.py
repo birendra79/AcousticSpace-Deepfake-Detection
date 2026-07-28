@@ -31,6 +31,7 @@ import soundfile as sf
 # Configuration  [NFR-6.1, FR-2.3, DR-3]
 # ---------------------------------------------------------------------------
 TARGET_SAMPLE_RATE: int = int(os.getenv("SAMPLE_RATE", 16000))
+MAX_ANALYZE_SECONDS: int = int(os.getenv("MAX_ANALYZE_SECONDS", 30))
 
 
 def load_and_validate_audio(
@@ -107,6 +108,14 @@ def load_and_validate_audio(
             target_sr=TARGET_SAMPLE_RATE,
         )
         sample_rate = TARGET_SAMPLE_RATE
+
+    # -- Cap duration to keep memory/CPU bounded on low-resource hosts ------
+    # Long recordings blow up memory during feature extraction + CNN inference
+    # (which is what was crashing the service on larger uploads). The first
+    # MAX_ANALYZE_SECONDS is more than enough for deepfake detection.
+    max_samples = MAX_ANALYZE_SECONDS * TARGET_SAMPLE_RATE
+    if audio_array.shape[0] > max_samples:
+        audio_array = audio_array[:max_samples]
 
     return audio_array.astype(np.float32), sample_rate
 
