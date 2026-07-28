@@ -66,14 +66,22 @@ def load_and_validate_audio(
         Exception:  Re-raised from Librosa if both loaders fail.
     """
     # -- Loader 1: SoundFile (primary) --------------------------------------
+    # Read only up to MAX_ANALYZE_SECONDS worth of frames — decoding the
+    # entire file first (even if we trim afterwards) was still spiking
+    # memory on large files, since the full array gets allocated before
+    # any trimming happens. Capping the read itself avoids that entirely.
     try:
-        audio_array, sample_rate = sf.read(io.BytesIO(raw_bytes), always_2d=False)
+        with sf.SoundFile(io.BytesIO(raw_bytes)) as f:
+            frames_to_read = min(f.frames, MAX_ANALYZE_SECONDS * f.samplerate)
+            audio_array = f.read(frames=frames_to_read, always_2d=False)
+            sample_rate = f.samplerate
     except Exception:
         # -- Loader 2: Librosa fallback (MP3, M4A, OGG via audioread) -------
         # mono=False so we receive the raw channel layout and handle mixing
         # ourselves below, consistent with the SoundFile path.
+        # duration= stops decoding early instead of reading the whole file.
         audio_array, sample_rate = librosa.load(
-            io.BytesIO(raw_bytes), sr=None, mono=False
+            io.BytesIO(raw_bytes), sr=None, mono=False, duration=MAX_ANALYZE_SECONDS
         )
 
     # -- Empty-signal guard  [FR-1.5] ---------------------------------------
