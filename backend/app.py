@@ -307,7 +307,10 @@ def on_startup() -> None:
     import torch
     torch.set_num_threads(1)
 
-    # --- Speed fix: warm up model once at startup, not on first user request ---
+    # --- Warm-up: load the model at startup so the first /analyze
+    # request doesn't have to load it (which was causing first-time failures)
+    from services.inference import get_inference_engine
+    get_inference_engine()
     
     import torch
     torch.set_grad_enabled(False)
