@@ -307,10 +307,19 @@ def on_startup() -> None:
     import torch
     torch.set_num_threads(1)
 
-    # --- Warm-up: load the model at startup so the first /analyze
-    # request doesn't have to load it (which was causing first-time failures)
+# --- Warm-up: run one dummy prediction at startup so torch's internal
+    # kernels/buffers are already initialized before the first real user request
     from services.inference import get_inference_engine
-    get_inference_engine()
+    import numpy as np
+
+    engine = get_inference_engine()
+    try:
+        silent_audio = np.zeros(16000, dtype=np.float32)  # 1 sec of silence
+        dummy_features = {"breathing": {"cadence_regularity_score": 0.5}}
+        engine.predict(silent_audio, 16000, dummy_features)
+        logger.info("Model warm-up prediction completed successfully")
+    except Exception:
+        logger.exception("Model warm-up prediction failed (non-fatal, continuing startup)")
     
     import torch
     torch.set_grad_enabled(False)
