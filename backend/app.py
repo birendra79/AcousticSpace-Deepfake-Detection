@@ -303,6 +303,14 @@ def on_startup() -> None:
 
     create_all_tables()
 
+    # --- Speed fix: use all available CPU cores for torch ---
+    import torch
+    torch.set_num_threads(os.cpu_count())
+
+    # --- Speed fix: warm up model once at startup, not on first user request ---
+    from services.inference import get_inference_engine
+    get_inference_engine()
+
     # Log structured system info record on startup
     import platform
     import sys
