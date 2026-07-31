@@ -208,6 +208,8 @@ class InferenceEngine:
 
     def predict(self, y: np.ndarray, sr: int, features: dict) -> dict:
 
+        print("ENGINE STEP 1")
+
         with tempfile.NamedTemporaryFile(
             suffix=".wav",
             delete=False
@@ -215,9 +217,15 @@ class InferenceEngine:
 
             temp_path = tmp.name
 
+        print("ENGINE STEP 2:", temp_path)
+
         sf.write(temp_path, y, sr)
 
+        print("ENGINE STEP 3")
+
         cnn_result = predict_audio(temp_path)
+
+        print("ENGINE STEP 4:", cnn_result)
 
         prediction = (
             "Real"
@@ -225,7 +233,11 @@ class InferenceEngine:
             else "Deepfake"
         )
 
+        print("ENGINE STEP 5")
+
         confidence = cnn_result["confidence"]
+
+        print("ENGINE STEP 6")
 
         suspicious_segments = (
             []
@@ -233,7 +245,11 @@ class InferenceEngine:
             else self._find_suspicious_segments(y, sr)
         )
 
+        print("ENGINE STEP 7")
+
         breathing_score = features["breathing"]["cadence_regularity_score"]
+
+        print("ENGINE STEP 8")
 
         return {
             "prediction": prediction,
@@ -247,7 +263,6 @@ class InferenceEngine:
                 if breathing_score is not None and breathing_score >= 0.3
                 else "Suspicious",
         }
-
 
     @staticmethod
     def _find_suspicious_segments(y: np.ndarray, sr: int, window_sec: float = 3.0):

@@ -35,7 +35,7 @@ timestamp           : DATETIME — UTC timestamp of the analysis
 
 from datetime import datetime
 
-from sqlalchemy import Column, DateTime, Float, String, Text
+from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, String, Text
 
 from models.user import Base  # reuse the shared declarative base
 
@@ -44,6 +44,7 @@ class AnalysisHistory(Base):
     __tablename__ = "analysis_history"
 
     id: str = Column(String(36), primary_key=True, index=True)
+    user_id: int = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
     filename: str = Column(Text, nullable=False)
     prediction: str = Column(String(16), nullable=False)        # "Real" | "Deepfake"
     confidence: float = Column(Float, nullable=False)

@@ -1,6 +1,4 @@
 import librosa
-import librosa.display
-import matplotlib.pyplot as plt
 
 from ml.dataset.audio_reader import load_audio
 from ml.preprocessing.audio_preprocessor import preprocess_audio
@@ -18,6 +16,10 @@ def extract_mfcc(audio, sample_rate):
 
 
 def plot_mfcc(mfcc, sample_rate):
+    # Imported here (not at module top) so the live server doesn't need
+    # matplotlib/librosa.display just to import this file.
+    import librosa.display
+    import matplotlib.pyplot as plt
 
     plt.figure(figsize=(10, 4))
 
