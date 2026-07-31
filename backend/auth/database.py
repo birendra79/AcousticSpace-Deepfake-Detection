@@ -52,6 +52,36 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 def create_all_tables() -> None:
     """Create every table declared under Base (User, …) if they don't exist."""
     Base.metadata.create_all(bind=engine)
+    _migrate_add_user_id_column()
+
+
+def _migrate_add_user_id_column() -> None:
+    """
+    One-time, safe-to-repeat migration: add the `user_id` column to
+    `analysis_history` if the table already existed before this column was
+    introduced (SQLAlchemy's create_all() only creates missing tables, it
+    never alters existing ones). Without this, older production databases
+    would crash on the next query/insert that references user_id.
+    """
+    from sqlalchemy import text, inspect
+
+    inspector = inspect(engine)
+    if "analysis_history" not in inspector.get_table_names():
+        return  # brand-new table, already created with user_id above
+
+    existing_columns = {col["name"] for col in inspector.get_columns("analysis_history")}
+    if "user_id" in existing_columns:
+        return  # already migrated
+
+    with engine.begin() as conn:
+        if engine.dialect.name == "postgresql":
+            conn.execute(text(
+                "ALTER TABLE analysis_history ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id)"
+            ))
+        else:
+            # SQLite (local dev) — no IF NOT EXISTS on ADD COLUMN, but we
+            # already checked the column doesn't exist above, so this is safe.
+            conn.execute(text("ALTER TABLE analysis_history ADD COLUMN user_id INTEGER"))
 
 
 def get_db():

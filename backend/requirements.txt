@@ -23,8 +23,9 @@ numpy==1.26.4                   # Numerical array operations
 scipy==1.13.1                   # Hilbert transform for RT60 estimation  [FR-3.1]
 
 # --- Machine Learning --------------------------------------------------------
-torch==2.3.1                    # PyTorch — model training and inference  [FR-11.6, FR-11.7]
-torchaudio==2.3.1               # Audio utilities aligned with PyTorch version
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.3.1+cpu
+torchaudio==2.3.1+cpu
 transformers==4.42.3            # Hugging Face: ASTModel, ASTFeatureExtractor  [MR-6]
 scikit-learn==1.5.0             # Evaluation metrics: accuracy, F1, ROC-AUC  [FR-11.8]
 
@@ -36,11 +37,7 @@ sqlalchemy==2.0.31                # ORM for user persistence (SQLite in dev)
 # --- API and data handling ---------------------------------------------------
 pydantic==2.7.4                 # Request / response validation  [FR-5.6]
 python-dotenv==1.0.1            # Load .env files into environment  [NFR-6.1]
-pandas==2.2.2                   # manifest.csv read/write for training pipeline  [FR-11.2]
-matplotlib==3.9.0               # Optional: spectrogram visualisation in notebooks
 
-# --- Dataset acquisition -----------------------------------------------------
-kagglehub==0.2.9                # ASVspoof 2021 DF dataset download  [FR-11.1]
 
 # --- PDF generation ----------------------------------------------------------
 reportlab==4.2.2                # PDF report generation for analysis results
@@ -51,3 +48,6 @@ python-magic==0.4.27            # MIME type detection from file magic bytes (fil
 
 # --- Monitoring --------------------------------------------------------------
 psutil==5.9.8                   # Cross-platform process and system metrics (CPU, memory, disk)
+
+# --- Database (Postgres) ------------------------------------------------------
+psycopg2-binary==2.9.9           # Postgres driver for SQLAlchemy
