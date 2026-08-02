@@ -128,6 +128,7 @@ def get_dashboard_stats(
 
     rows_all = (
         db.query(AnalysisHistory)
+        .filter(AnalysisHistory.user_id == current_user.id)
         .order_by(AnalysisHistory.timestamp.desc())
         .all()
     )
@@ -302,6 +303,7 @@ def get_history(
     """
     rows = (
         db.query(AnalysisHistory)
+        .filter(AnalysisHistory.user_id == current_user.id)
         .order_by(AnalysisHistory.timestamp.desc())
         .all()
     )
@@ -324,7 +326,14 @@ def delete_analysis(
     Requires a valid access token. Emits an audit event.
     Returns 404 if the record does not exist.
     """
-    row = db.query(AnalysisHistory).filter(AnalysisHistory.id == analysis_id).first()
+    row = (
+        db.query(AnalysisHistory)
+        .filter(
+            AnalysisHistory.id == analysis_id,
+            AnalysisHistory.user_id == current_user.id,
+        )
+        .first()
+    )
     if row is None:
         emit(
             AuditEvent.HISTORY_DELETE_ONE,
@@ -367,7 +376,11 @@ def delete_all_analyses(
     Permanently delete all analysis records.
     Requires a valid access token. Emits an audit event.
     """
-    count = db.query(AnalysisHistory).delete()
+    count = (
+        db.query(AnalysisHistory)
+        .filter(AnalysisHistory.user_id == current_user.id)
+        .delete()
+    )
     db.commit()
     emit(
         AuditEvent.HISTORY_DELETE_ALL,
@@ -395,7 +408,14 @@ def download_report(
     Generate and stream a PDF report for a single analysis.
     Requires a valid access token. Emits an audit event.
     """
-    row = db.query(AnalysisHistory).filter(AnalysisHistory.id == analysis_id).first()
+    row = (
+        db.query(AnalysisHistory)
+        .filter(
+            AnalysisHistory.id == analysis_id,
+            AnalysisHistory.user_id == current_user.id,
+        )
+        .first()
+    )
     if row is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -590,6 +610,7 @@ async def analyze_audio(
     # -- Step 5: Persist to database  [FR-6.1] ------------------------------
     row = AnalysisHistory(
         id=analysis_id,
+        user_id=current_user.id,
         filename=safe_filename,
         prediction=result["prediction"],
         confidence=result["confidence"],
